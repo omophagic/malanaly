@@ -1,4 +1,6 @@
 from pyxlsb import open_workbook
+import xlrd
+import openpyxl
 import os
 import sys
 import optparse
@@ -21,16 +23,45 @@ def extract_downloader_links(file_path):
   
     print("[*] Working file: " + file_path)
     #xls = open_workbook(file_path)
-    xls = open_workbook(file_path)
+    #xls = load_workbook(file_path, read_only=True)
+    try:
+        xls = xlrd.open_workbook(file_path)
+    except: 
+        return
+    print(xls.sheet_names)
+
+#    xls = openpyxl.load_workbook(file_path)
+    sheetnames = xls.sheet_names()
     obf = []
 
+
     print("=========================")
-    for sheet in xls.sheets:
-        s = xls.get_sheet(sheet)
-        for row in s.rows(sparse=True):
-            for c in row:
-                if c.v != None:
-                    obf.append(c.v)
+    for sheet in sheetnames:
+        print(sheet)
+        s = xls.sheet_by_name(sheet)
+        #obf.append(s)
+        #continue
+
+        ##################################
+        # template code found online - needed for transferring functionality to xlrd API
+        #   - could not get execution of provided URL script or from HP Threat Research script
+        rows = s.nrows - 1
+        cells = s.ncols - 1
+        curr_row = -1
+        while curr_row < rows:
+            curr_row += 1
+            row = s.row(curr_row)
+            curr_cell = -1
+            while curr_cell < cells:
+                curr_cell += 1
+                cell_type = s.cell_type(curr_row, curr_cell)
+                cell_value = s.cell_value(curr_row, curr_cell)
+        # end template code from online
+        #
+        ########################################
+                if cell_type != 0:
+                    obf.append(cell_value)
+        
     urls = []
     script = ""
     tmp_urls = ""
